@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    /* Project Options */
+    "target": "ES2020",
+    "module": "CommonJS",
+    "lib": ["ES2020"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Build Options */
+    "declaration": true, // 🌟 สำคัญ: สร้างไฟล์ .d.ts (ไฟล์ Type)
+    "outDir": "./dist",   // 🌟 ที่เก็บไฟล์ JavaScript ที่ build แล้ว
+    "rootDir": "./src",   // 🌟 ที่เก็บโค้ด TypeScript ของเรา
+
+    /* Module Resolution */
+    "moduleResolution": "node"
+  },
+  "include": ["src/**/*"], // บอกให้ tsc สนใจแค่โฟลเดอร์ src
+  "exclude": ["node_modules", "dist"]
+}
