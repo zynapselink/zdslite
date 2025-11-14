@@ -624,6 +624,7 @@ try {
 
   * **FTS5 Integration:** True Full-Text Search support from SQLite to make `match` queries faster and smarter (e.g., stemming, ranking).
   * **Schema Migration:** A helper utility for managing schema updates.
+  * **Broader DB Support:** Potential future support for other SQL databases like MySQL or PostgreSQL.
 
 -----
 
