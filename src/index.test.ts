@@ -132,7 +132,7 @@ describe('DSLite Unit Tests', () => {
 
       expect(user.length).toBe(1);
       expect(user[0].password).not.toBe(plainPassword);
-      expect(user[0].password).toMatch(/^[a-f0-9]+:[a-f0-9]+$/); // salt:hash format
+      expect(user[0].password).toMatch(/^dslite-scrypt:v1:64:[a-f0-9]+:[a-f0-9]+$/); // algorithm:version:keylength:salt:hash
     });
 
     it('should automatically hash a password on update', async () => {
@@ -141,7 +141,7 @@ describe('DSLite Unit Tests', () => {
       const user = await db.search('customers', { query: { term: { id: 1 } } });
 
       expect(user[0].password).not.toBe(plainPassword);
-      expect(user[0].password).toMatch(/^[a-f0-9]+:[a-f0-9]+$/);
+      expect(user[0].password).toMatch(/^dslite-scrypt:v1:64:/);
     });
 
     it('should automatically hash a password on upsert', async () => {
@@ -149,7 +149,39 @@ describe('DSLite Unit Tests', () => {
       await db.upsert('customers', { username: 'newuser', password: plainPassword }, 'username');
       const user = await db.search('customers', { query: { term: { username: 'newuser' } } });
       expect(user[0].password).not.toBe(plainPassword);
-      expect(user[0].password).toMatch(/^[a-f0-9]+:[a-f0-9]+$/);
+      expect(user[0].password).toMatch(/^dslite-scrypt:v1:64:/);
+    });
+
+    it('should correctly verify a valid password', async () => {
+      await db.insert('customers', { id: 1, username: 'testuser', password: plainPassword });
+      const user = await db.search('customers', { query: { term: { id: 1 } } });
+      const storedHash = user[0].password;
+
+      expect(db.verifyPassword(plainPassword, storedHash)).toBe(true);
+    });
+
+    it('should reject an invalid password', async () => {
+      await db.insert('customers', { id: 1, username: 'testuser', password: plainPassword });
+      const user = await db.search('customers', { query: { term: { id: 1 } } });
+      const storedHash = user[0].password;
+
+      expect(db.verifyPassword('wrong-password', storedHash)).toBe(false);
+    });
+
+    it('needsRehash should return false for a current hash', async () => {
+      await db.insert('customers', { id: 1, username: 'testuser', password: plainPassword });
+      const user = await db.search('customers', { query: { term: { id: 1 } } });
+      expect(db.needsRehash(user[0].password)).toBe(false);
+    });
+
+    it('needsRehash should return true for an outdated hash', () => {
+      // Simulate old formats
+      const oldHash_v0 = 'old-scrypt:v0:64:somesalt:somehash';
+      const oldHash_wrongKeyLength = 'dslite-scrypt:v1:32:somesalt:somehash';
+      const invalidFormat = 'somesalt:somehash';
+      expect(db.needsRehash(oldHash_v0)).toBe(true);
+      expect(db.needsRehash(oldHash_wrongKeyLength)).toBe(true);
+      expect(db.needsRehash(invalidFormat)).toBe(true);
     });
   });
 

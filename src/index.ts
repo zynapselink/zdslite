@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import {
   v7 as uuidv7
 } from 'uuid';
-import { scryptSync, randomBytes } from 'crypto';
+import { scryptSync, randomBytes, timingSafeEqual } from 'crypto';
 
 import {
   SqlValue, SqlResult, DslQueryClause, DslJoin, DslSort, DslQuery, DslRunResult,
@@ -30,6 +30,12 @@ export class DSLite {
   // Regex for validating safe identifiers.
   // Allows: letters, numbers, and underscores.
   private static readonly SAFE_IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/;
+
+  // Hashing constants for versioning and security upgrades.
+  private static readonly HASH_ALGORITHM = 'dslite-scrypt';
+  private static readonly HASH_VERSION = 'v1';
+  private static readonly HASH_KEY_LENGTH = 64;
+  private static readonly HASH_SALT_LENGTH = 16;
 
   /**
    * Creates an instance of DSLite and connects to the database.
@@ -74,6 +80,53 @@ export class DSLite {
     } catch (error: any) {
       console.error("Run query failed:", error, { sql, params });
       return { changes: 0, lastInsertRowid: 0, error: new DSLiteQueryError('Run query failed', { cause: error, sql }) };
+    }
+  }
+
+  /**
+   * Verifies a plain-text password against a stored hash for a specific user.
+   * This is the secure way to handle user login.
+   * @param table The table containing the users (e.g., 'customers').
+   * @param password The plain-text password to verify.
+   * @param storedHash The stored hash from the database (e.g., from `user.password`).
+   * @returns {boolean} True if the password is correct, false otherwise.
+   */
+  public verifyPassword(password: string, storedHash: string): boolean {
+    try {
+      const [algorithm, version, keyLengthStr, salt, hash] = storedHash.split(':');
+      if (!algorithm || !version || !keyLengthStr || !salt || !hash) {
+        return false; // Invalid hash format
+      }
+      const keyLength = parseInt(keyLengthStr, 10);
+
+      const hashToCompare = scryptSync(password, salt, keyLength);
+      const storedHashBuffer = Buffer.from(hash, 'hex');
+
+      // Use timingSafeEqual to prevent timing attacks
+      return timingSafeEqual(hashToCompare, storedHashBuffer);
+    } catch (error) {
+      // If any error occurs (e.g., invalid format), treat it as a failed verification.
+      console.error("Password verification failed:", (error as Error).message);
+      return false;
+    }
+  }
+
+  /**
+   * Checks if a stored hash uses outdated parameters and should be re-hashed.
+   * @param storedHash The hash string from the database.
+   * @returns {boolean} True if the hash should be updated, false otherwise.
+   */
+  public needsRehash(storedHash: string): boolean {
+    try {
+      const [algorithm, version, keyLengthStr] = storedHash.split(':');
+      const keyLength = parseInt(keyLengthStr, 10);
+
+      return algorithm !== DSLite.HASH_ALGORITHM ||
+             version !== DSLite.HASH_VERSION ||
+             keyLength !== DSLite.HASH_KEY_LENGTH;
+    } catch {
+      // If the hash format is invalid, it definitely needs rehashing.
+      return true;
     }
   }
 
@@ -454,10 +507,16 @@ export class DSLite {
    * @returns The salt and hash in the format "salt:hash".
    */
   private _hashPassword(password: string): string {
-    const salt = randomBytes(16).toString('hex');
+    const salt = randomBytes(DSLite.HASH_SALT_LENGTH).toString('hex');
     // Scrypt is a CPU and memory-intensive hashing function, which is good for passwords.
-    const hash = scryptSync(password, salt, 64).toString('hex');
-    return `${salt}:${hash}`;
+    const hash = scryptSync(password, salt, DSLite.HASH_KEY_LENGTH).toString('hex');
+    return [
+      DSLite.HASH_ALGORITHM,
+      DSLite.HASH_VERSION,
+      DSLite.HASH_KEY_LENGTH,
+      salt,
+      hash
+    ].join(':');
   }
 
   /**
@@ -564,6 +623,10 @@ export class DSLite {
     else if ('term' in queryObj) { return this._parseTerm(queryObj); }
     else if ('terms' in queryObj) { return this._parseTerms(queryObj); }
     else if ('range' in queryObj) { return this._parseRange(queryObj); }
+    else if ('password_verify' in queryObj) {
+      // This clause cannot be translated to a direct SQL WHERE clause.
+      throw new DSLiteValidationError(`'password_verify' cannot be used directly in a search query. Use the 'db.verifyPassword(plainPassword, storedHash)' method after fetching the user.`);
+    }
     // Fallback for unsupported query types.
     console.warn(`Unsupported query type: ${Object.keys(queryObj)[0]}. Ignoring.`);
     return { sql: '1=1', params: [] };

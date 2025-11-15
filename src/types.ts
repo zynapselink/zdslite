@@ -8,6 +8,7 @@ export type TermsQuery = { terms: { [field: string]: SqlValue[] } };
 export type MatchQuery = { match: { [field: string]: string } };
 export type MatchPhraseQuery = { match_phrase: { [field: string]: string } };
 export type MultiMatchQuery = { multi_match: { query: string; fields: string[] } };
+export type PasswordVerifyQuery = { password_verify: { field: string; value: string } };
 export type ExistsQuery = { exists: { field: string } };
 export type RangeOps = { gt?: number; gte?: number; lt?: number; lte?: number };
 export type RangeQuery = { range: { [field: string]: RangeOps } };
@@ -20,7 +21,7 @@ export type BoolQuery = {
   };
 };
 
-export type DslQueryClause = TermQuery | TermsQuery | MatchQuery | MatchPhraseQuery | MultiMatchQuery | ExistsQuery | RangeQuery | BoolQuery;
+export type DslQueryClause = TermQuery | TermsQuery | MatchQuery | MatchPhraseQuery | MultiMatchQuery | ExistsQuery | RangeQuery | BoolQuery | PasswordVerifyQuery;
 
 export interface DslJoin {
   type?: 'LEFT' | 'INNER' | 'RIGHT' | 'FULL';
