@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { DSLite, DSLiteError, DSLiteQueryError, DSLiteValidationError } from './index';
+import { ZDSLite, ZDSLiteError, ZDSLiteQueryError, ZDSLiteValidationError } from './index';
 import minimist from 'minimist';
 import fs from 'fs';
 import path from 'path';
@@ -11,20 +11,20 @@ import { startServer } from './server';
 // --- Helper Function ---
 function printHelp() {
   console.log(`
-DSLite CLI
+ZDSLite CLI
 Official Zynapse Link (https://zynapse.link) utility
 
 Usage (Single Command):
-  dslite --db <path> '<json_query>'
-  cat query.json | dslite --db <path>
+  zdslite --db <path> '<json_query>'
+  cat query.json | zdslite --db <path>
 
 Usage (Interactive REPL):
-  dslite --connect <path>
-  dslite -c <path>
+  zdslite --connect <path>
+  zdslite -c <path>
 
 Usage (API Server):
-  dslite --server --db <path> [--port <number>]
-  dslite -s -d <path> [-p <number>]
+  zdslite --server --db <path> [--port <number>]
+  zdslite -s -d <path> [-p <number>]
 
 Options:
   --db, -d        Path to the SQLite database file.
@@ -34,11 +34,11 @@ Options:
   --help, -h      Show this help message.
 
 REPL Examples:
-  dslite> await db.create('users', { id: 'INTEGER', name: 'TEXT' })
-  dslite> await db.insert('users', { id: 1, name: 'Alice' })
-  dslite> await db.search('users', { query: { term: { id: 1 } } })
-  dslite> .tables
-  dslite> .exit
+  zdslite> await db.create('users', { id: 'INTEGER', name: 'TEXT' })
+  zdslite> await db.insert('users', { id: 1, name: 'Alice' })
+  zdslite> await db.search('users', { query: { term: { id: 1 } } })
+  zdslite> .tables
+  zdslite> .exit
 `);
 }
 
@@ -47,10 +47,10 @@ REPL Examples:
  */
 function startReplMode(dbPath: string) {
   console.log(`Connecting to ${dbPath}...`);
-  let db: DSLite;
+  let db: ZDSLite;
   try {
-    db = new DSLite(dbPath);
-    console.log(`Connected. Welcome to DSLite REPL!`);
+    db = new ZDSLite(dbPath);
+    console.log(`Connected. Welcome to ZDSLite REPL!`);
     console.log(`Type .help for commands, or use the 'db' object.`);
   } catch (e: any) {
     console.error(`Failed to connect: ${e.message}`);
@@ -59,7 +59,7 @@ function startReplMode(dbPath: string) {
 
   // Create the REPL server
   const replServer = repl.start({
-    prompt: 'dslite> ',
+    prompt: 'zdslite> ',
     useColors: true,
   });
 
@@ -72,7 +72,7 @@ function startReplMode(dbPath: string) {
     async action() {
       this.clearBufferedCommand();
       try {
-        // Use db.run, which is part of DSLite, but for a raw query
+        // Use db.run, which is part of ZDSLite, but for a raw query
         const result = db.run("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
         // Note: db.run in the TS version returns RunResult, not the data.
         // For a REPL, we might want a db.query() method that returns data.
@@ -133,38 +133,38 @@ async function runSingleCommand(args: minimist.ParsedArgs, dbPath: string) {
   }
 
   try {
-    const db = new DSLite(dbPath);
+    const db = new ZDSLite(dbPath);
     let result: any;
 
     switch (method) {
       case 'search':
-        if (!dsl) throw new DSLiteValidationError('"dsl" object is required for "search"');
+        if (!dsl) throw new ZDSLiteValidationError('"dsl" object is required for "search"');
         result = await db.search(table, dsl);
         break;
       
       case 'aggregate':
-        if (!dsl) throw new DSLiteValidationError('"dsl" object is required for "aggregate"');
+        if (!dsl) throw new ZDSLiteValidationError('"dsl" object is required for "aggregate"');
         result = await db.aggregate(table, dsl);
         break;
       
       case 'insert':
-        if (!data) throw new DSLiteValidationError('"data" object/array is required for "insert"');
+        if (!data) throw new ZDSLiteValidationError('"data" object/array is required for "insert"');
         result = await db.insert(table, data);
         break;
       
       case 'update':
-        if (!doc) throw new DSLiteValidationError('"doc" object is required for "update"');
-        if (!query) throw new DSLiteValidationError('"query" clause is required for "update"');
+        if (!doc) throw new ZDSLiteValidationError('"doc" object is required for "update"');
+        if (!query) throw new ZDSLiteValidationError('"query" clause is required for "update"');
         result = await db.update(table, doc, query);
         break;
       
       case 'delete':
-         if (!query) throw new DSLiteValidationError('"query" object is required for "delete"');
+         if (!query) throw new ZDSLiteValidationError('"query" object is required for "delete"');
         result = await db.delete(table, { query });
         break;
         
       case 'create':
-        if (!columns) throw new DSLiteValidationError('"columns" object is required for "create"');
+        if (!columns) throw new ZDSLiteValidationError('"columns" object is required for "create"');
         result = await db.create(table, columns);
         break;
 
@@ -173,7 +173,7 @@ async function runSingleCommand(args: minimist.ParsedArgs, dbPath: string) {
         break;
       
       default:
-        throw new DSLiteValidationError(`Unsupported method: ${method}`);
+        throw new ZDSLiteValidationError(`Unsupported method: ${method}`);
     }
     
     // Print successful result as JSON
@@ -181,10 +181,10 @@ async function runSingleCommand(args: minimist.ParsedArgs, dbPath: string) {
     
   } catch (error: any) {
     // Handle custom errors
-    console.error(`DSLite Error: ${error.name || 'Error'}`);
+    console.error(`ZDSLite Error: ${error.name || 'Error'}`);
     console.error(`Message: ${error.message}\n`);
     
-    if (error instanceof DSLiteQueryError) {
+    if (error instanceof ZDSLiteQueryError) {
       console.error("--- Failed SQL ---");
       console.error(error.sql);
       console.error("\n--- DB Cause ---");

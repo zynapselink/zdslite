@@ -1,13 +1,13 @@
-const { DSLite } = require('./dist');
+const { ZDSLite } = require('./dist');
 const fs = require('fs');
 
 const dbPath = './mydb-ts.sqlite';
 // Clean up previous database file for a fresh start
 if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
 
-const db = new DSLite(dbPath);
+const db = new ZDSLite(dbPath);
 
-console.log('--- 🚀 Testing DSLite Library 🚀 ---');
+console.log('--- 🚀 Testing ZDSLite Library 🚀 ---');
 
 (async () => {
   try {

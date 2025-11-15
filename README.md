@@ -4,11 +4,11 @@ Here is the complete, updated `README.md`:
 
 -----
 
-# 🚀 DSLite
+# 🚀 ZDSLite
 
 **A Secure, High-Performance JSON-DSL Query Layer for SQLite**
 
-`DSLite` (DSL-ite) is a lightweight Node.js library that acts as a **Query Builder Abstraction Layer** for **SQLite** (using `better-sqlite3`). It allows you to build and query your SQLite database using a familiar, **JSON-based DSL** (Domain Specific Language).
+`ZDSLite` (DSL-ite) is a lightweight Node.js library that acts as a **Query Builder Abstraction Layer** for **SQLite** (using `better-sqlite3`). It allows you to build and query your SQLite database using a familiar, **JSON-based DSL** (Domain Specific Language).
 
 The goal of this project is to bring the power and flexibility of a complex query DSL to the simplicity and speed of SQLite, without sacrificing security or performance.
 
@@ -28,7 +28,7 @@ The goal of this project is to bring the power and flexibility of a complex quer
 
 ## 🛡️ Security First
 
-`DSLite` is designed with security as a top priority, providing robust protection against SQL injection attacks.
+`ZDSLite` is designed with security as a top priority, providing robust protection against SQL injection attacks.
 
 ### 1\. Value Injection (100% Secure)
 
@@ -41,7 +41,7 @@ await db.search('users', { query: { term: { name: "admin'--" } } });
 
 ### 2\. Identifier Injection (Secure by Validation)
 
-All schema identifiers—such as table names, column names, and aliases—are rigorously validated against a strict whitelist (`/^[a-zA-Z0-9_]+$/`). If an identifier contains any potentially dangerous characters (e.g., `;`, `'`, `     `), `DSLite` will immediately throw a `DSLiteValidationError` to prevent the query from ever reaching the database.
+All schema identifiers—such as table names, column names, and aliases—are rigorously validated against a strict whitelist (`/^[a-zA-Z0-9_]+$/`). If an identifier contains any potentially dangerous characters (e.g., `;`, `'`, `     `), `ZDSLite` will immediately throw a `ZDSLiteValidationError` to prevent the query from ever reaching the database.
 
 ```javascript
 // THROWS ERROR: This will fail validation before running.
@@ -52,28 +52,28 @@ await db.create("users; DROP TABLE users; --", { id: 'INTEGER' });
 
 ## ⚡ Performance
 
-While `DSLite` provides a powerful abstraction layer, it's important to understand its performance characteristics compared to writing raw `better-sqlite3` queries. A benchmark was run on a standard developer machine with **50,000 records**.
+While `ZDSLite` provides a powerful abstraction layer, it's important to understand its performance characteristics compared to writing raw `better-sqlite3` queries. A benchmark was run on a standard developer machine with **50,000 records**.
 
-| Operation | DSLite | Raw `better-sqlite3` | Analysis |
+| Operation | ZDSLite | Raw `better-sqlite3` | Analysis |
 | :--- | :--- | :--- | :--- |
-| **Bulk Insert** | \~51ms | \~87ms | DSLite's internal transaction logic is highly optimized, leading to excellent performance. |
+| **Bulk Insert** | \~51ms | \~87ms | ZDSLite's internal transaction logic is highly optimized, leading to excellent performance. |
 | **Simple Search (Indexed)** | \~0.35ms | \~0.02ms | For ultra-fast indexed lookups, the DSL parsing adds a small, fixed overhead. |
 | **Match Search (LIKE)** | \~9.3ms | \~8.8ms | As query complexity increases, the DSL overhead becomes negligible. |
 | **Aggregation (GROUP BY)**| \~5.0ms | \~4.0ms | Performance is very close, making the DSL a great choice for complex reports. |
 
-**Conclusion:** `DSLite` introduces a minimal, sub-millisecond overhead on most queries in exchange for a safer, more readable, and more maintainable codebase. For the vast majority of applications, this trade-off is highly beneficial.
+**Conclusion:** `ZDSLite` introduces a minimal, sub-millisecond overhead on most queries in exchange for a safer, more readable, and more maintainable codebase. For the vast majority of applications, this trade-off is highly beneficial.
 
 -----
 
 ## 📦 Installation
 
-`DSLite` requires `better-sqlite3` as a peer dependency. This gives you control over the specific version of `better-sqlite3` used in your project.
+`ZDSLite` requires `better-sqlite3` as a peer dependency. This gives you control over the specific version of `better-sqlite3` used in your project.
 
 You must install both libraries:
 
 ```bash
 # Install the libraries
-npm install dslite better-sqlite3
+npm install zdslite better-sqlite3
 
 # (For TypeScript users) Install types
 npm install @types/better-sqlite3 --save-dev
@@ -83,18 +83,18 @@ npm install @types/better-sqlite3 --save-dev
 
 ## 🚀 Quick Start
 
-Here is a basic example of how to use `DSLite` as a library:
+Here is a basic example of how to use `ZDSLite` as a library:
 
 ```javascript
 // example.js
-const { DSLite } = require('dslite'); // or import { DSLite } from 'dslite';
+const { ZDSLite } = require('zdslite'); // or import { ZDSLite } from 'zdslite';
 const fs = require('fs');
 
 const dbPath = './mydb.sqlite';
 if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath); // Clear old DB (if any)
 
-// 1. Create a DSLite Instance
-const db = new DSLite(dbPath);
+// 1. Create a ZDSLite Instance
+const db = new ZDSLite(dbPath);
 
 (async () => {
   // 2. Create a table
@@ -144,7 +144,7 @@ const db = new DSLite(dbPath);
 
 ## ⚡️ CLI (Command Line Interface)
 
-`DSLite` includes a handy CLI for all its features.
+`ZDSLite` includes a handy CLI for all its features.
 
 ### Running the CLI
 
@@ -152,24 +152,24 @@ You have two main ways to run the CLI:
 
 **1. Using `npx` (Recommended for projects)**
 
-This command runs the `dslite` executable from your local `node_modules` or downloads it temporarily. It's the best way to ensure you're using the version pinned in your project's `package.json`.
+This command runs the `zdslite` executable from your local `node_modules` or downloads it temporarily. It's the best way to ensure you're using the version pinned in your project's `package.json`.
 
 ```bash
-npx dslite --connect ...
+npx zdslite --connect ...
 ```
 
 **2. Global Install (For development or frequent use)**
 
-You can install `dslite` globally to make the `dslite` command available everywhere in your system's terminal.
+You can install `zdslite` globally to make the `zdslite` command available everywhere in your system's terminal.
 
 ```bash
-npm install -g dslite
+npm install -g zdslite
 ```
 
 **For developers (using `npm link`):**
-If you have cloned the `dslite` source code and want to test your local changes, run `npm link` from the root of the source code. This creates a global `dslite` command that points directly to your working copy, allowing you to see changes instantly.
+If you have cloned the `zdslite` source code and want to test your local changes, run `npm link` from the root of the source code. This creates a global `zdslite` command that points directly to your working copy, allowing you to see changes instantly.
 
-> **Note:** The following examples assume you have the `dslite` command available globally (either via `npm i -g` or `npm link`).
+> **Note:** The following examples assume you have the `zdslite` command available globally (either via `npm i -g` or `npm link`).
 
 ### 1\. Interactive REPL Mode
 
@@ -178,32 +178,32 @@ This is the best way to explore your data or test queries quickly.
 **Usage:**
 
 ```bash
-dslite --connect ./mydb.sqlite
+zdslite --connect ./mydb.sqlite
 # or the short-hand:
-dslite -c ./mydb.sqlite
+zdslite -c ./mydb.sqlite
 ```
 
-This will open a `dslite>` prompt with a pre-configured `db` instance ready to use. `await` is supported at the top level.
+This will open a `zdslite>` prompt with a pre-configured `db` instance ready to use. `await` is supported at the top level.
 
 ```bash
-$ dslite -c ./mydb.sqlite
+$ zdslite -c ./mydb.sqlite
 Connecting to ./mydb.sqlite...
-Connected. Welcome to DSLite REPL!
+Connected. Welcome to ZDSLite REPL!
 Type .help for commands, or use the 'db' object.
 
-dslite> await db.create('users', { id: 'INTEGER', name: 'TEXT' })
+zdslite> await db.create('users', { id: 'INTEGER', name: 'TEXT' })
 { changes: 0, lastInsertRowid: 0 }
 
-dslite> await db.insert('users', { name: 'Alice' })
+zdslite> await db.insert('users', { name: 'Alice' })
 { changes: 1, lastInsertRowid: 1 }
 
-dslite> await db.search('users', { query: { term: { name: 'Alice' } } })
+zdslite> await db.search('users', { query: { term: { name: 'Alice' } } })
 [ { id: 1, name: 'Alice' } ]
 
-dslite> .tables
+zdslite> .tables
 [ 'users' ]
 
-dslite> .exit
+zdslite> .exit
 ```
 
 ### 2\. Single Command Mode
@@ -213,7 +213,7 @@ This mode is designed for single-shot commands and scripting, returning results 
 **Usage:**
 
 ```bash
-dslite --db <path> '<json_query>'
+zdslite --db <path> '<json_query>'
 ```
 
 The `'<json_query>'` is a JSON object that **must** include a `method` key and other necessary arguments.
@@ -222,7 +222,7 @@ The `'<json_query>'` is a JSON object that **must** include a `method` key and o
 
 ```bash
 # Note the use of single quotes to wrap the JSON string
-dslite -d ./mydb.sqlite '{
+zdslite -d ./mydb.sqlite '{
   "method": "search",
   "table": "users",
   "dsl": {
@@ -239,7 +239,7 @@ dslite -d ./mydb.sqlite '{
 **Example 2: Inserting**
 
 ```bash
-dslite -d ./mydb.sqlite '{
+zdslite -d ./mydb.sqlite '{
   "method": "insert",
   "table": "users",
   "data": { "name": "Bob", "age": 30 }
@@ -256,15 +256,15 @@ dslite -d ./mydb.sqlite '{
 
 ## 🛰️ API Server Mode
 
-DSLite can also run as a persistent, standalone HTTP API server. This allows any application, written in any language (Python, Go, Java, or even a shell script), to interact with your SQLite database over HTTP.
+ZDSLite can also run as a persistent, standalone HTTP API server. This allows any application, written in any language (Python, Go, Java, or even a shell script), to interact with your SQLite database over HTTP.
 
 ### 1\. Starting the Server
 
 Use the `-s` (or `--server`) flag, specifying your database file.
 
 ```bash
-$ dslite -s -d ./mydb.sqlite
-🚀 DSLite API server running on http://localhost:3000
+$ zdslite -s -d ./mydb.sqlite
+🚀 ZDSLite API server running on http://localhost:3000
 Connected to database: ./mydb.sqlite
 Send POST requests to /query
 ...
@@ -314,7 +314,7 @@ This is the cleanest way to manage your server command.
 // package.json
 {
   "scripts": {
-    "serve:api": "dslite -s -d ./path/to/your.db"
+    "serve:api": "zdslite -s -d ./path/to/your.db"
   }
 }
 ```
@@ -331,7 +331,7 @@ Then, use `pm2` to start the `npm` script:
 # '--' separates pm2's args from npm's args
 # 'run serve:api' is the npm command to run
 
-pm2 start npm --name dslite-api -- run serve:api
+pm2 start npm --name zdslite-api -- run serve:api
 ```
 
 **Step 3: Manage your server**
@@ -343,17 +343,17 @@ Your API server is now running in the background.
 pm2 list
 
 # Watch the logs for your server
-pm2 logs dslite-api
+pm2 logs zdslite-api
 
 # Stop the server
-pm2 stop dslite-api
+pm2 stop zdslite-api
 ```
 
 -----
 
 ## 📖 DSL Query Syntax Reference
 
-The `dslQuery` object is the heart of `DSLite`. It's used in `search` and `aggregate` and consists of the following parts.
+The `dslQuery` object is the heart of `ZDSLite`. It's used in `search` and `aggregate` and consists of the following parts.
 
 ### 1\. The Query Clause (`query: { ... }`)
 
@@ -499,7 +499,7 @@ Used only in `db.aggregate()`.
 
 ## 📚 API Reference
 
-### `new DSLite(dbPath)`
+### `new ZDSLite(dbPath)`
 
 Creates a new connection to the SQLite database.
 
@@ -529,7 +529,7 @@ await db.create('posts', {
 // Create a table with an auto-hashing password field
 await db.create('customers', {
   id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
-  password: 'HASHED' // DSLite will automatically hash this field
+  password: 'HASHED' // ZDSLite will automatically hash this field
 });
 ```
 
@@ -717,27 +717,27 @@ try {
 
 ### 🛡️ Error Handling
 
-`DSLite` uses custom error classes that extend the base `DSLiteError`, allowing for precise `try...catch` blocks.
+`ZDSLite` uses custom error classes that extend the base `ZDSLiteError`, allowing for precise `try...catch` blocks.
 
-  * **`DSLiteValidationError`**: Thrown when input validation fails before a query is run. This includes invalid table/column names or missing required parameters.
+  * **`ZDSLiteValidationError`**: Thrown when input validation fails before a query is run. This includes invalid table/column names or missing required parameters.
 
-  * **`DSLiteQueryError`**: Thrown when a database query fails during execution. This error contains a `cause` property with the original database driver error and a `sql` property with the failed SQL query, making debugging much easier.
+  * **`ZDSLiteQueryError`**: Thrown when a database query fails during execution. This error contains a `cause` property with the original database driver error and a `sql` property with the failed SQL query, making debugging much easier.
 
 You can catch these errors using `instanceof`:
 
 ```javascript
-import { DSLite, DSLiteValidationError, DSLiteQueryError } from 'dslite';
+import { ZDSLite, ZDSLiteValidationError, ZDSLiteQueryError } from 'zdslite';
 
-const db = new DSLite(':memory:');
+const db = new ZDSLite(':memory:');
 
 try {
-  // This will throw a DSLiteValidationError
+  // This will throw a ZDSLiteValidationError
   await db.create('invalid-table-name!', { id: 'INTEGER' });
 
 } catch (error) {
-  if (error instanceof DSLiteValidationError) {
+  if (error instanceof ZDSLiteValidationError) {
     console.error('Validation Error:', error.message);
-  } else if (error instanceof DSLiteQueryError) {
+  } else if (error instanceof ZDSLiteQueryError) {
     console.error('Query Execution Error:', error.message);
     // You can inspect the original error and the failed SQL
     console.error('Original Cause:', error.cause);
@@ -752,7 +752,7 @@ try {
 
 ## 🗺️ Roadmap
 
-`DSLite` is fairly complete, but future features could include:
+`ZDSLite` is fairly complete, but future features could include:
 
   * **FTS5 Integration:** True Full-Text Search support from SQLite to make `match` queries faster and smarter (e.g., stemming, ranking).
   * **Schema Migration:** A helper utility for managing schema updates.
@@ -775,7 +775,7 @@ If you have a suggestion that would make this better, please fork the repo and c
 ### Pull Request Process
 
 1.  **Fork** the repository.
-2.  **Clone** your fork locally: `git clone https://github.com/zynapselink/dslite.git`
+2.  **Clone** your fork locally: `git clone https://github.com/zynapselink/zdslite.git`
 3.  **Install** dependencies: `npm install`
 4.  **Create** your feature branch: `git checkout -b feature/MyAmazingFeature`
 5.  **Make** your changes in the `src/` directory.

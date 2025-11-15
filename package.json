@@ -1,27 +1,28 @@
 {
-  "name": "dslite",
+  "name": "zdslite",
   "version": "1.0.0",
-  "description": "An Elasticsearch-like DSL query layer for SQLite",
+  "description": "A JSON-based DSL query layer for SQLite",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "dslite": "dist/cli.js"
+    "zdslite": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && jest"
+    "test": "npm run build && jest",
+    "start": "node dist/cli.js",
+    "dev": "ts-node-dev src/cli.ts"
   },
   "files": [
     "dist"
   ],
   "keywords": [
     "sqlite",
-    "dsl",
-    "elasticsearch",
+    "json-dsl",
     "query",
     "better-sqlite3"
   ],
-  "author": "",
+  "author": "Zynapse Link <zynapse.link@gmail.com>",
   "license": "ISC",
   "dependencies": {
     "better-sqlite3": "^11.1.2",
@@ -36,6 +37,7 @@
     "@types/uuid": "^10.0.0",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.5",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.3"
   }
 }

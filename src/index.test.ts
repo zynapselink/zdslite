@@ -1,13 +1,13 @@
-import { DSLite, DSLiteValidationError, DSLiteQueryError } from './index';
+import { ZDSLite, ZDSLiteValidationError, ZDSLiteQueryError } from './index';
 import { validate as validateUUID } from 'uuid';
 
-describe('DSLite Unit Tests', () => {
-  let db: DSLite;
+describe('ZDSLite Unit Tests', () => {
+  let db: ZDSLite;
   const dbPath = ':memory:';
 
   // Setup a new in-memory database before each test
   beforeEach(async () => {
-    db = new DSLite(dbPath);
+    db = new ZDSLite(dbPath);
     await db.create('users', {
       id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
       name: 'TEXT NOT NULL',
@@ -29,18 +29,18 @@ describe('DSLite Unit Tests', () => {
 
   describe('Constructor and Validation', () => {
     it('should connect to an in-memory database', () => {
-      expect(db).toBeInstanceOf(DSLite);
+      expect(db).toBeInstanceOf(ZDSLite);
     });
 
-    it('should throw DSLiteValidationError for invalid table names', async () => {
+    it('should throw ZDSLiteValidationError for invalid table names', async () => {
       // Use async/await with expect().rejects for promises
       await expect(db.create('invalid-table!', { id: 'INTEGER' }))
-        .rejects.toThrow(DSLiteValidationError);
+        .rejects.toThrow(ZDSLiteValidationError);
     });
 
-    it('should throw DSLiteValidationError for invalid column names', async () => {
+    it('should throw ZDSLiteValidationError for invalid column names', async () => {
       await expect(db.create('test', { 'invalid-column!': 'TEXT' }))
-        .rejects.toThrow(DSLiteValidationError);
+        .rejects.toThrow(ZDSLiteValidationError);
     });
   });
 
@@ -132,7 +132,7 @@ describe('DSLite Unit Tests', () => {
 
       expect(user.length).toBe(1);
       expect(user[0].password).not.toBe(plainPassword);
-      expect(user[0].password).toMatch(/^dslite-scrypt:v1:64:[a-f0-9]+:[a-f0-9]+$/); // algorithm:version:keylength:salt:hash
+      expect(user[0].password).toMatch(/^zdslite-scrypt:v1:64:[a-f0-9]+:[a-f0-9]+$/); // algorithm:version:keylength:salt:hash
     });
 
     it('should automatically hash a password on update', async () => {
@@ -141,7 +141,7 @@ describe('DSLite Unit Tests', () => {
       const user = await db.search('customers', { query: { term: { id: 1 } } });
 
       expect(user[0].password).not.toBe(plainPassword);
-      expect(user[0].password).toMatch(/^dslite-scrypt:v1:64:/);
+      expect(user[0].password).toMatch(/^zdslite-scrypt:v1:64:/);
     });
 
     it('should automatically hash a password on upsert', async () => {
@@ -149,7 +149,7 @@ describe('DSLite Unit Tests', () => {
       await db.upsert('customers', { username: 'newuser', password: plainPassword }, 'username');
       const user = await db.search('customers', { query: { term: { username: 'newuser' } } });
       expect(user[0].password).not.toBe(plainPassword);
-      expect(user[0].password).toMatch(/^dslite-scrypt:v1:64:/);
+      expect(user[0].password).toMatch(/^zdslite-scrypt:v1:64:/);
     });
 
     it('should correctly verify a valid password', async () => {
@@ -335,12 +335,12 @@ describe('DSLite Unit Tests', () => {
       // This transaction will fail because of a UNIQUE constraint violation (duplicate email)
       const txPromise = db.transaction(async (tx) => {
         await tx.update('users', { status: 'archived' }, { term: { name: 'Charlie' } });
-        // This line will throw a DSLiteQueryError
+        // This line will throw a ZDSLiteQueryError
         await tx.insert('users', { name: 'Duplicate Bob', email: 'bob@example.com' });
       });
 
       // Check that the promise rejects with the correct error type
-      await expect(txPromise).rejects.toThrow(DSLiteQueryError);
+      await expect(txPromise).rejects.toThrow(ZDSLiteQueryError);
 
       // Restore the original console.error implementation
       consoleErrorSpy.mockRestore();

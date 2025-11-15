@@ -1,37 +1,37 @@
 /**
- * Base error for all DSLite-specific errors.
+ * Base error for all ZDSLite-specific errors.
  * @extends Error
  */
-export class DSLiteError extends Error {
+export class ZDSLiteError extends Error {
   public cause?: any;
   constructor(message: string, options?: { cause?: any }) {
     super(message);
-    this.name = 'DSLiteError';
+    this.name = 'ZDSLiteError';
     this.cause = options?.cause;
   }
 }
 
 /**
  * Thrown for validation errors, such as invalid identifiers or missing parameters.
- * @extends DSLiteError
+ * @extends ZDSLiteError
  */
-export class DSLiteValidationError extends DSLiteError {
+export class ZDSLiteValidationError extends ZDSLiteError {
   constructor(message: string) {
     super(message);
-    this.name = 'DSLiteValidationError';
+    this.name = 'ZDSLiteValidationError';
   }
 }
 
 /**
  * Thrown when a database query fails to execute.
  * Contains the original error cause and the failed SQL.
- * @extends DSLiteError
+ * @extends ZDSLiteError
  */
-export class DSLiteQueryError extends DSLiteError {
+export class ZDSLiteQueryError extends ZDSLiteError {
   public sql?: string;
   constructor(message: string, options?: { cause?: any; sql?: string; }) {
     super(message, options);
-    this.name = 'DSLiteQueryError';
+    this.name = 'ZDSLiteQueryError';
     this.sql = options?.sql;
   }
 }

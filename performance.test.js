@@ -1,4 +1,4 @@
-const { DSLite } = require('./dist');
+const { ZDSLite } = require('./dist');
 const Database = require('better-sqlite3');
 const fs = require('fs');
 
@@ -25,18 +25,18 @@ for (let i = 0; i < NUM_RECORDS; i++) {
 const searchEmail = `user${Math.floor(NUM_RECORDS / 2)}@example.com`;
 
 async function runPerformanceTest() {
-  console.log(`--- 🚀 DSLite vs. Raw better-sqlite3 Performance Test (${NUM_RECORDS} records) ---`);
+  console.log(`--- 🚀 ZDSLite vs. Raw better-sqlite3 Performance Test (${NUM_RECORDS} records) ---`);
 
   // --- Test 1: Bulk Insert ---
   console.log('\n--- Test 1: Bulk Insert ---');
   cleanup();
   
-  // DSLite Insert
-  const dsliteInsertDb = new DSLite(dbPath);
+  // ZDSLite Insert
+  const dsliteInsertDb = new ZDSLite(dbPath);
   await dsliteInsertDb.create('users', { name: 'TEXT', email: 'TEXT', age: 'INTEGER', status: 'TEXT' });
-  console.time('DSLite Insert');
+  console.time('ZDSLite Insert');
   await dsliteInsertDb.insert('users', records);
-  console.timeEnd('DSLite Insert');
+  console.timeEnd('ZDSLite Insert');
   dsliteInsertDb.close();
 
   // Raw better-sqlite3 Insert
@@ -55,7 +55,7 @@ async function runPerformanceTest() {
 
 
   // --- Setup for Query Tests ---
-  const db = new DSLite(dbPath);
+  const db = new ZDSLite(dbPath);
   await db.create('users', { name: 'TEXT', email: 'TEXT UNIQUE', age: 'INTEGER', status: 'TEXT' });
   await db.createIndex('users', ['email']);
   await db.createIndex('users', ['status']);
@@ -66,11 +66,11 @@ async function runPerformanceTest() {
   // --- Test 2: Simple Search (Indexed) ---
   console.log('\n--- Test 2: Simple Search (Indexed "email") ---');
   
-  // DSLite Search
-  const dsliteSearchDb = new DSLite(dbPath);
-  console.time('DSLite Search');
+  // ZDSLite Search
+  const dsliteSearchDb = new ZDSLite(dbPath);
+  console.time('ZDSLite Search');
   await dsliteSearchDb.search('users', { query: { term: { email: searchEmail } } });
-  console.timeEnd('DSLite Search');
+  console.timeEnd('ZDSLite Search');
   dsliteSearchDb.close();
 
   // Raw better-sqlite3 Search
@@ -85,11 +85,11 @@ async function runPerformanceTest() {
   // --- Test 3: Match Search (LIKE) ---
   console.log('\n--- Test 3: Match Search (LIKE on "name") ---');
 
-  // DSLite Match
-  const dsliteMatchDb = new DSLite(dbPath);
-  console.time('DSLite Match');
+  // ZDSLite Match
+  const dsliteMatchDb = new ZDSLite(dbPath);
+  console.time('ZDSLite Match');
   await dsliteMatchDb.search('users', { query: { match: { name: 'User 12345' } } });
-  console.timeEnd('DSLite Match');
+  console.timeEnd('ZDSLite Match');
   dsliteMatchDb.close();
 
   // Raw better-sqlite3 LIKE
@@ -104,16 +104,16 @@ async function runPerformanceTest() {
   // --- Test 4: Aggregation ---
   console.log('\n--- Test 4: Aggregation (GROUP BY) ---');
 
-  // DSLite Aggregate
-  const dsliteAggDb = new DSLite(dbPath);
-  console.time('DSLite Aggregate');
+  // ZDSLite Aggregate
+  const dsliteAggDb = new ZDSLite(dbPath);
+  console.time('ZDSLite Aggregate');
   await dsliteAggDb.aggregate('users', {
     aggs: {
       group_by: ['status'],
       metrics: { user_count: { count: '*' } }
     }
   });
-  console.timeEnd('DSLite Aggregate');
+  console.timeEnd('ZDSLite Aggregate');
   dsliteAggDb.close();
 
   // Raw better-sqlite3 GROUP BY

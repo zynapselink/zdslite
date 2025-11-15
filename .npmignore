@@ -1,0 +1,18 @@
+# Source code (only compiled 'dist' folder is needed)
+/src
+
+# Development and test files
+/example.js
+/performance.test.js
+
+# Configuration files
+/.gitignore
+/jest.config.js
+/tsconfig.json
+
+# Node modules (never publish this)
+/node_modules
+
+# Build output (only publish compiled files)
+dist/*.test.js
+dist/*.test.d.ts

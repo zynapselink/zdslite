@@ -14,13 +14,13 @@ import {
 // Re-export types and errors for public API
 export * from './types';
 export * from './errors';
-import { DSLiteValidationError, DSLiteQueryError } from './errors';
+import { ZDSLiteValidationError, ZDSLiteQueryError } from './errors';
 
 /**
- * The main class for interacting with a SQLite database using a JSON-based DSL.
+ * The main class for interacting with a SQLite database using a JSON-based DSL (ZDSLite).
  * It provides methods for schema management, CRUD operations, complex queries, and transactions.
  */
-export class DSLite {
+export class ZDSLite { // Note: This was already ZDSLite, but other references will be checked.
   private db: Database.Database;
 
   // Internal map to track tables that use UUID as a primary key.
@@ -32,13 +32,13 @@ export class DSLite {
   private static readonly SAFE_IDENTIFIER_REGEX = /^[a-zA-Z0-9_]+$/;
 
   // Hashing constants for versioning and security upgrades.
-  private static readonly HASH_ALGORITHM = 'dslite-scrypt';
+  private static readonly HASH_ALGORITHM = 'zdslite-scrypt';
   private static readonly HASH_VERSION = 'v1';
   private static readonly HASH_KEY_LENGTH = 64;
   private static readonly HASH_SALT_LENGTH = 16;
 
   /**
-   * Creates an instance of DSLite and connects to the database.
+   * Creates an instance of ZDSLite and connects to the database.
    * @param dbPath The path to the SQLite database file, or ':memory:' for an in-memory database.
    * @throws {Error} If the database connection fails.
    */
@@ -60,9 +60,9 @@ export class DSLite {
 
   // Identifier validation function.
   private _validateIdentifier(identifier: string, context: string = 'Identifier'): void {
-    if (!DSLite.SAFE_IDENTIFIER_REGEX.test(identifier)) {
+    if (!ZDSLite.SAFE_IDENTIFIER_REGEX.test(identifier)) {
       // Throws a validation error if unsafe characters are found.
-      throw new DSLiteValidationError(`Invalid characters detected in ${context}: ${identifier}`);
+      throw new ZDSLiteValidationError(`Invalid characters detected in ${context}: ${identifier}`);
     }
   }
 
@@ -79,7 +79,7 @@ export class DSLite {
       return this.db.prepare(sql).run(params as any);
     } catch (error: any) {
       console.error("Run query failed:", error, { sql, params });
-      return { changes: 0, lastInsertRowid: 0, error: new DSLiteQueryError('Run query failed', { cause: error, sql }) };
+      return { changes: 0, lastInsertRowid: 0, error: new ZDSLiteQueryError('Run query failed', { cause: error, sql }) };
     }
   }
 
@@ -121,9 +121,9 @@ export class DSLite {
       const [algorithm, version, keyLengthStr] = storedHash.split(':');
       const keyLength = parseInt(keyLengthStr, 10);
 
-      return algorithm !== DSLite.HASH_ALGORITHM ||
-             version !== DSLite.HASH_VERSION ||
-             keyLength !== DSLite.HASH_KEY_LENGTH;
+      return algorithm !== ZDSLite.HASH_ALGORITHM ||
+             version !== ZDSLite.HASH_VERSION ||
+             keyLength !== ZDSLite.HASH_KEY_LENGTH;
     } catch {
       // If the hash format is invalid, it definitely needs rehashing.
       return true;
@@ -136,10 +136,10 @@ export class DSLite {
    * Creates a new table in the database if it doesn't already exist.
    * @param table The name of the table to create.
    * @returns {Promise<CreateResult>} A promise that resolves with the creation result.
-   * @throws {DSLiteValidationError} If table or column names are invalid.
+   * @throws {ZDSLiteValidationError} If table or column names are invalid.
    */
   public async create(table: string, columns: Record<string, string>): Promise<CreateResult> {
-    if (!table || !columns || Object.keys(columns).length === 0) throw new DSLiteValidationError('Table and columns are required.');
+    if (!table || !columns || Object.keys(columns).length === 0) throw new ZDSLiteValidationError('Table and columns are required.');
     
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
@@ -167,22 +167,22 @@ export class DSLite {
     
     const sql = `CREATE TABLE IF NOT EXISTS \`${table}\` (${defs})`;
     try { this.run(sql); return { acknowledged: true, table: table }; }
-    catch (error: any) { return { acknowledged: false, error: new DSLiteQueryError('Create table failed', { cause: error, sql }) }; }
+    catch (error: any) { return { acknowledged: false, error: new ZDSLiteQueryError('Create table failed', { cause: error, sql }) }; }
   }
 
   /**
    * Drops a table from the database if it exists.
    * @param table The name of the table to drop.
    * @returns {Promise<DropResult>} A promise that resolves with the drop result.
-   * @throws {DSLiteValidationError} If the table name is invalid.
+   * @throws {ZDSLiteValidationError} If the table name is invalid.
    */
   public async drop(table: string): Promise<DropResult> {
-    if (!table) throw new DSLiteValidationError('Table name is required for drop.');
+    if (!table) throw new ZDSLiteValidationError('Table name is required for drop.');
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
     const sql = `DROP TABLE IF EXISTS \`${table}\``;
     try { this.run(sql); return { acknowledged: true, table: table }; }
-    catch (error: any) { return { acknowledged: false, error: new DSLiteQueryError('Drop table failed', { cause: error, sql }) }; }
+    catch (error: any) { return { acknowledged: false, error: new ZDSLiteQueryError('Drop table failed', { cause: error, sql }) }; }
   }
 
   /**
@@ -195,7 +195,7 @@ export class DSLite {
    * @returns {Promise<IndexResult>} A promise that resolves with the index creation result.
    */
   public async createIndex(table: string, fields: string[], options: { unique?: boolean; name?: string } = {}): Promise<IndexResult> {
-    if (!table || !Array.isArray(fields) || fields.length === 0) throw new DSLiteValidationError('Table name and at least one field are required.');
+    if (!table || !Array.isArray(fields) || fields.length === 0) throw new ZDSLiteValidationError('Table name and at least one field are required.');
     
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
@@ -211,22 +211,22 @@ export class DSLite {
     const uniqueSql = options.unique === true ? 'UNIQUE' : '';
     const sql = `CREATE ${uniqueSql} INDEX IF NOT EXISTS \`${indexName}\` ON \`${table}\` (${quotedFields})`;
     try { this.run(sql); return { acknowledged: true, indexName: indexName }; }
-    catch (error: any) { console.error("Create index failed:", error, { sql }); return { acknowledged: false, error: new DSLiteQueryError('Create index failed', { cause: error, sql }) }; }
+    catch (error: any) { console.error("Create index failed:", error, { sql }); return { acknowledged: false, error: new ZDSLiteQueryError('Create index failed', { cause: error, sql }) }; }
   }
 
   /**
    * Drops an index from the database.
    * @param indexName The name of the index to drop.
    * @returns {Promise<IndexResult>} A promise that resolves with the index drop result.
-   * @throws {DSLiteValidationError} If the index name is invalid.
+   * @throws {ZDSLiteValidationError} If the index name is invalid.
    */
   public async dropIndex(indexName: string): Promise<IndexResult> {
-    if (!indexName) throw new DSLiteValidationError('Index name is required for dropIndex.');
+    if (!indexName) throw new ZDSLiteValidationError('Index name is required for dropIndex.');
     // SECURE: Validate the index name.
     this._validateIdentifier(indexName, 'index name');
     const sql = `DROP INDEX IF EXISTS \`${indexName}\``;
     try { this.run(sql); return { acknowledged: true, indexName: indexName }; }
-    catch (error: any) { console.error("Drop index failed:", error, { sql }); return { acknowledged: false, error: new DSLiteQueryError('Drop index failed', { cause: error, sql }) }; }
+    catch (error: any) { console.error("Drop index failed:", error, { sql }); return { acknowledged: false, error: new ZDSLiteQueryError('Drop index failed', { cause: error, sql }) }; }
   }
 
   // --- Data Manipulation Language (DML) Methods ---
@@ -238,7 +238,7 @@ export class DSLite {
    * @returns {Promise<InsertResult>} A promise that resolves with the insert result.
    */
   public async insert(table: string, data: object | object[]): Promise<InsertResult> {
-    if (!table || !data) throw new DSLiteValidationError('Table and data are required for insert.');
+    if (!table || !data) throw new ZDSLiteValidationError('Table and data are required for insert.');
     
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
@@ -281,7 +281,7 @@ export class DSLite {
       return { acknowledged: true, insertedCount: insertedCount };
     } catch (error: any) {
       console.error("Insert query failed:", error, { sql });
-      const queryError = new DSLiteQueryError('Insert query failed', { cause: error, sql });
+      const queryError = new ZDSLiteQueryError('Insert query failed', { cause: error, sql });
       // If inside a transaction, throw to trigger rollback. Otherwise, return the error object.
       if (this.db.inTransaction) throw queryError;
       return { acknowledged: false, error: queryError };
@@ -296,7 +296,7 @@ export class DSLite {
    * @returns {Promise<UpdateResult>} A promise that resolves with the update result.
    */
   public async update(table: string, doc: Record<string, any>, query: DslQueryClause): Promise<UpdateResult> {
-    if (!table || !doc || !query) throw new DSLiteValidationError('Table, doc, and query are required for update.');
+    if (!table || !doc || !query) throw new ZDSLiteValidationError('Table, doc, and query are required for update.');
     
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
@@ -306,7 +306,7 @@ export class DSLite {
 
     // SECURE: Doc keys (column names) are validated by _parseSetClause -> _quoteField.
     const { setSql, setParams } = this._parseSetClause(doc);
-    if (!setSql) throw new DSLiteValidationError('Update document (doc) is empty or invalid.');
+    if (!setSql) throw new ZDSLiteValidationError('Update document (doc) is empty or invalid.');
     
     // SECURE: Query fields are validated by _parseQuery -> _quoteField.
     const where = this._parseQuery(query);
@@ -317,7 +317,7 @@ export class DSLite {
       return { acknowledged: true, updatedCount: info.changes };
     } catch (error: any) {
       console.error("Update query failed:", error, { sql, allParams });
-      const queryError = new DSLiteQueryError('Update query failed', { cause: error, sql });
+      const queryError = new ZDSLiteQueryError('Update query failed', { cause: error, sql });
       if (this.db.inTransaction) throw queryError;
       return { acknowledged: false, error: queryError };
     }
@@ -330,7 +330,7 @@ export class DSLite {
    * @returns {Promise<DeleteResult>} A promise that resolves with the delete result.
    */
   public async delete(table: string, query: { query: DslQueryClause }): Promise<DeleteResult> {
-    if (!table || !query || !query.query) throw new DSLiteValidationError('Table and query object are required for delete.');
+    if (!table || !query || !query.query) throw new ZDSLiteValidationError('Table and query object are required for delete.');
     
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
@@ -344,7 +344,7 @@ export class DSLite {
       return { acknowledged: true, deletedCount: info.changes };
     } catch (error: any) {
       console.error("Delete query failed:", error, { sql, allParams });
-      const queryError = new DSLiteQueryError('Delete query failed', { cause: error, sql });
+      const queryError = new ZDSLiteQueryError('Delete query failed', { cause: error, sql });
       if (this.db.inTransaction) throw queryError;
       return { acknowledged: false, error: queryError };
     }
@@ -360,7 +360,7 @@ export class DSLite {
    */
   public async upsert(table: string, doc: Record<string, any>, conflictKey: string | string[]): Promise<UpsertResult> {
     if (!table || !doc || !conflictKey || Object.keys(doc).length === 0) {
-      throw new DSLiteValidationError('Table, doc, and conflictKey are required for upsert.');
+      throw new ZDSLiteValidationError('Table, doc, and conflictKey are required for upsert.');
     }
 
     // SECURE: Validate table name
@@ -391,7 +391,7 @@ export class DSLite {
     try { const info = this.run(sql, params); if (info.error) throw info.error; return { acknowledged: true, changes: info.changes, lastInsertRowid: info.lastInsertRowid }; }
     catch (error: any) {
       console.error("Upsert query failed:", error, { sql, params });
-      const queryError = new DSLiteQueryError('Upsert query failed', { cause: error, sql });
+      const queryError = new ZDSLiteQueryError('Upsert query failed', { cause: error, sql });
       if (this.db.inTransaction) throw queryError;
       return { acknowledged: false, error: queryError };
     }
@@ -405,7 +405,7 @@ export class DSLite {
    * @returns {Promise<any[]>} A promise that resolves with an array of aggregated results.
    */
   public async aggregate(table: string, dslQuery: DslQuery): Promise<any[]> {
-    if (!table || !dslQuery.aggs) throw new DSLiteValidationError('Table and `aggs` block are required.');
+    if (!table || !dslQuery.aggs) throw new ZDSLiteValidationError('Table and `aggs` block are required.');
     
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
@@ -431,7 +431,7 @@ export class DSLite {
         }
       }
     }
-    if (selectParts.length === 0) throw new DSLiteValidationError('Aggregation must define "group_by" or "metrics".');
+    if (selectParts.length === 0) throw new ZDSLiteValidationError('Aggregation must define "group_by" or "metrics".');
     let orderBy = ''; if (dslQuery.sort) orderBy = this._parseSort(dslQuery.sort);
     let limitSql = ''; let limitParams: SqlValue[] = []; if (dslQuery.size) { limitSql = 'LIMIT ?'; limitParams.push(dslQuery.size); }
     const selectSql = selectParts.join(', ');
@@ -448,7 +448,7 @@ export class DSLite {
    * @returns {Promise<any[]>} A promise that resolves with an array of matching documents.
    */
   public async search(table: string, dslQuery: DslQuery): Promise<any[]> {
-    if (!table) throw new DSLiteValidationError('Table name is required for search.');
+    if (!table) throw new ZDSLiteValidationError('Table name is required for search.');
     
     // SECURE: Validate the table name.
     this._validateIdentifier(table, 'table name');
@@ -470,33 +470,33 @@ export class DSLite {
   /**
    * Executes a series of database operations within a transaction.
    * If the callback function throws an error, the transaction is automatically rolled back.
-   * @param callback An async function that receives the transaction-bound DSLite instance.
+   * @param callback An async function that receives the transaction-bound ZDSLite instance.
    * @returns {Promise<TxResult>} A promise that resolves if the transaction is committed.
-   * @throws {DSLiteQueryError} If the transaction fails and is rolled back.
+   * @throws {ZDSLiteQueryError} If the transaction fails and is rolled back.
    */
-  public async transaction(callback: (tx: DSLite) => Promise<void>): Promise<TxResult> {
+  public async transaction(callback: (tx: ZDSLite) => Promise<void>): Promise<TxResult> {
     try { this.run('BEGIN'); await callback(this); this.run('COMMIT'); return { acknowledged: true, committed: true }; }
     catch (error: any) {
       this.run('ROLLBACK');
       console.error("Transaction failed:", error.message);
-      throw new DSLiteQueryError('Transaction failed and was rolled back', { cause: error });
+      throw new ZDSLiteQueryError('Transaction failed and was rolled back', { cause: error });
     }
   }
   /**
    * Manually begins a transaction.
    * @returns {Promise<ManualTxResult>} A promise that resolves on success.
    */
-  public async beginTransaction(): Promise<ManualTxResult> { try { this.run('BEGIN'); return { acknowledged: true }; } catch (error: any) { return { acknowledged: false, error: new DSLiteQueryError('BEGIN transaction failed', { cause: error }) }; } }
+  public async beginTransaction(): Promise<ManualTxResult> { try { this.run('BEGIN'); return { acknowledged: true }; } catch (error: any) { return { acknowledged: false, error: new ZDSLiteQueryError('BEGIN transaction failed', { cause: error }) }; } }
   /**
    * Manually commits the current transaction.
    * @returns {Promise<ManualTxResult>} A promise that resolves on success.
    */
-  public async commit(): Promise<ManualTxResult> { try { this.run('COMMIT'); return { acknowledged: true }; } catch (error: any) { return { acknowledged: false, error: new DSLiteQueryError('COMMIT transaction failed', { cause: error }) }; } }
+  public async commit(): Promise<ManualTxResult> { try { this.run('COMMIT'); return { acknowledged: true }; } catch (error: any) { return { acknowledged: false, error: new ZDSLiteQueryError('COMMIT transaction failed', { cause: error }) }; } }
   /**
    * Manually rolls back the current transaction.
    * @returns {Promise<ManualTxResult>} A promise that resolves on success.
    */
-  public async rollback(): Promise<ManualTxResult> { try { this.run('ROLLBACK'); return { acknowledged: true }; } catch (error: any) { return { acknowledged: false, error: new DSLiteQueryError('ROLLBACK transaction failed', { cause: error }) }; } }
+  public async rollback(): Promise<ManualTxResult> { try { this.run('ROLLBACK'); return { acknowledged: true }; } catch (error: any) { return { acknowledged: false, error: new ZDSLiteQueryError('ROLLBACK transaction failed', { cause: error }) }; } }
 
 
   // --- Internal DSL Parsers ---
@@ -507,13 +507,13 @@ export class DSLite {
    * @returns The salt and hash in the format "salt:hash".
    */
   private _hashPassword(password: string): string {
-    const salt = randomBytes(DSLite.HASH_SALT_LENGTH).toString('hex');
+    const salt = randomBytes(ZDSLite.HASH_SALT_LENGTH).toString('hex');
     // Scrypt is a CPU and memory-intensive hashing function, which is good for passwords.
-    const hash = scryptSync(password, salt, DSLite.HASH_KEY_LENGTH).toString('hex');
+    const hash = scryptSync(password, salt, ZDSLite.HASH_KEY_LENGTH).toString('hex');
     return [
-      DSLite.HASH_ALGORITHM,
-      DSLite.HASH_VERSION,
-      DSLite.HASH_KEY_LENGTH,
+      ZDSLite.HASH_ALGORITHM,
+      ZDSLite.HASH_VERSION,
+      ZDSLite.HASH_KEY_LENGTH,
       salt,
       hash
     ].join(':');
@@ -587,7 +587,7 @@ export class DSLite {
       this._validateIdentifier(joinDef.target, 'join target table');
       const targetTable = `\`${joinDef.target}\``;
       
-      if (!joinDef.on || !joinDef.on.left || !joinDef.on.right) throw new DSLiteValidationError(`Invalid JOIN definition for target ${joinDef.target}: 'on' clause is missing.`);
+      if (!joinDef.on || !joinDef.on.left || !joinDef.on.right) throw new ZDSLiteValidationError(`Invalid JOIN definition for target ${joinDef.target}: 'on' clause is missing.`);
       
       // SECURE: These fields are validated by _quoteField.
       const left = this._quoteField(joinDef.on.left); 
@@ -625,7 +625,7 @@ export class DSLite {
     else if ('range' in queryObj) { return this._parseRange(queryObj); }
     else if ('password_verify' in queryObj) {
       // This clause cannot be translated to a direct SQL WHERE clause.
-      throw new DSLiteValidationError(`'password_verify' cannot be used directly in a search query. Use the 'db.verifyPassword(plainPassword, storedHash)' method after fetching the user.`);
+      throw new ZDSLiteValidationError(`'password_verify' cannot be used directly in a search query. Use the 'db.verifyPassword(plainPassword, storedHash)' method after fetching the user.`);
     }
     // Fallback for unsupported query types.
     console.warn(`Unsupported query type: ${Object.keys(queryObj)[0]}. Ignoring.`);
